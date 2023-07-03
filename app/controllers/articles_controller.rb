@@ -1,9 +1,9 @@
 class ArticlesController < ApplicationController
-  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+  before_action :authorize_user, only: [:index, :show]
 
   def index
-    articles = Article.where(is_member_only: false).includes(:user).order(created_at: :desc)
-    render json: articles, each_serializer: ArticleListSerializer
+    articles = Article.all
+    render json: articles, each_serializer: ArticlePreviewSerializer
   end
 
   def show
@@ -13,8 +13,9 @@ class ArticlesController < ApplicationController
 
   private
 
-  def record_not_found
-    render json: { error: "Article not found" }, status: :not_found
-  end
+  def authorize_user
+    return if current_user
 
+    render json: { error: 'Not authorized' }, status: :unauthorized
+  end
 end
